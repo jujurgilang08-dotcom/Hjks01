@@ -105,10 +105,13 @@ app.post("/api/keys/generate", requireAuthApi, (req, res) => {
     }
   }
 
+  const parsedExpires = (expiresAt && expiresAt !== "null" && expiresAt !== "")
+    ? new Date(expiresAt).toISOString() : null;
+
   KEYS[keyValue] = {
     key: keyValue,
     createdAt: new Date().toISOString(),
-    expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
+    expiresAt: parsedExpires,
     note: note || "",
     active: true,
     lastUsedAt: null,
@@ -526,11 +529,15 @@ async function generateKey() {
   const expiresAtRaw   = document.getElementById('expiresAt').value;
   const note           = document.getElementById('note').value.trim();
   const allowedDevices = document.getElementById('allowedDevices').value;
-  const expiresAt      = expiresAtRaw ? new Date(expiresAtRaw + 'T23:59:59').toISOString() : null;
-  const res  = await fetch('/api/keys/generate', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ customKey, expiresAt, note, allowedDevices })
+  const expiresAt = expiresAtRaw ? new Date(expiresAtRaw + 'T23:59:59').toISOString() : '';
+  const res = await fetch('/api/keys/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ customKey, expiresAt: expiresAt || null, note, allowedDevices })
   });
+  // tambah try-catch agar error network terlihat
+  let data;
+  try { data = await res.json(); } catch(e) { showToast('❌ Gagal konek ke server'); return; }
   const data = await res.json();
   if (data.status === 'ok') {
     showToast('✅ Key dibuat: ' + data.data.key);
@@ -540,7 +547,7 @@ async function generateKey() {
     document.getElementById('allowedDevices').value = '';
     fetchKeys();
   } else {
-    showToast('❌ ' + data.message);
+    showToast('❌ ' + (data.message || 'Gagal buat key'));
   }
 }
 
@@ -607,8 +614,6 @@ async function saveDevices() {
   const res  = await fetch('/api/keys/' + encodeURIComponent(currentModalKey) + '/devices', {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ allowedDevices })
-  });
-  const data = await res.json();
   if (data.status === 'ok') {
     showToast('✅ Device list disimpan.');
     document.getElementById('deviceOverlay').classList.remove('open');
