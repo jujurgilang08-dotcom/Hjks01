@@ -13,6 +13,10 @@
  * Gunakan fitur "Backup" secara rutin, lalu simpan file backup.json
  * di komputer kamu. Setelah redeploy, gunakan fitur "Import" untuk
  * memulihkan semua key yang sudah pernah dibuat.
+ *
+ * UI: Dark theme, dioptimasi untuk tampilan WebView browser Android
+ * (viewport mobile-first, area sentuh besar, aman untuk notch/safe-area,
+ * tanpa hover-only interaction, font system Android).
  */
 
 const express = require("express");
@@ -333,47 +337,129 @@ app.post("/api/verify", handleVerify);
 app.get("/health", (req, res) => res.json({ status: "ok" }));
 
 // ------------------------------------------------------
-// TEMPLATE HTML — LOGIN PAGE
+// TEMPLATE HTML — LOGIN PAGE (Dark Theme, mobile/WebView-first)
 // ------------------------------------------------------
 function renderLoginPage(errorMsg) {
   return `<!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#0b0d12" />
+<meta name="color-scheme" content="dark" />
 <title>Login Admin - Key Server</title>
 <style>
-  * { box-sizing: border-box; }
+  :root {
+    --bg: #0b0d12;
+    --bg-elevated: #12151c;
+    --surface: #171b24;
+    --surface-2: #1e232e;
+    --border: #262c38;
+    --text: #e8eaee;
+    --text-muted: #8b93a3;
+    --accent: #5b8cff;
+    --accent-strong: #4674ee;
+    --danger: #ff6b6b;
+    --danger-bg: rgba(255, 107, 107, 0.12);
+    --radius: 14px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    height: 100%;
+    overscroll-behavior-y: contain;
+  }
   body {
-    margin: 0; font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    background: #f4f5f7; display: flex; align-items: center; justify-content: center;
-    height: 100vh;
+    margin: 0;
+    font-family: Roboto, "Segoe UI", -apple-system, system-ui, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: calc(24px + var(--safe-top)) 20px calc(24px + var(--safe-bottom));
   }
   .box {
-    background: #fff; padding: 32px; border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.08); width: 100%; max-width: 340px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 28px 24px;
+    border-radius: var(--radius);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.45);
+    width: 100%;
+    max-width: 360px;
   }
-  h1 { font-size: 20px; margin: 0 0 20px; color: #222; }
-  label { font-size: 13px; color: #555; display: block; margin-bottom: 6px; }
+  .lock-badge {
+    width: 52px; height: 52px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    margin: 0 auto 16px;
+  }
+  h1 {
+    font-size: 19px; margin: 0 0 4px; color: var(--text);
+    text-align: center; font-weight: 600;
+  }
+  .sub {
+    text-align: center; color: var(--text-muted); font-size: 13px;
+    margin: 0 0 22px;
+  }
+  label {
+    font-size: 13px; color: var(--text-muted); display: block;
+    margin-bottom: 6px; font-weight: 500;
+  }
   input {
-    width: 100%; padding: 10px 12px; margin-bottom: 14px; border: 1px solid #ddd;
-    border-radius: 6px; font-size: 14px;
+    width: 100%;
+    padding: 13px 14px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    color: var(--text);
+    border-radius: 10px;
+    font-size: 16px; /* >=16px agar Android WebView tidak auto-zoom saat fokus */
+    outline: none;
+    transition: border-color 0.15s ease;
   }
+  input:focus {
+    border-color: var(--accent);
+  }
+  input::placeholder { color: #565f70; }
   button {
-    width: 100%; padding: 10px; background: #2563eb; color: #fff; border: none;
-    border-radius: 6px; font-size: 14px; cursor: pointer;
+    width: 100%;
+    padding: 14px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-appearance: none;
   }
-  button:hover { background: #1d4ed8; }
-  .error { color: #dc2626; font-size: 13px; margin-bottom: 12px; }
+  button:active { background: var(--accent-strong); transform: scale(0.99); }
+  .error {
+    color: var(--danger);
+    background: var(--danger-bg);
+    border: 1px solid rgba(255,107,107,0.25);
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
 </style>
 </head>
 <body>
   <div class="box">
-    <h1>🔐 Login Admin</h1>
+    <div class="lock-badge">🔐</div>
+    <h1>Login Admin</h1>
+    <p class="sub">Key License Server</p>
     ${errorMsg ? `<div class="error">${errorMsg}</div>` : ""}
     <form method="POST" action="/login">
       <label>Username</label>
-      <input type="text" name="username" required autocomplete="username" />
+      <input type="text" name="username" required autocomplete="username" autocapitalize="off" autocorrect="off" />
       <label>Password</label>
       <input type="password" name="password" required autocomplete="current-password" />
       <button type="submit">Masuk</button>
@@ -384,78 +470,182 @@ function renderLoginPage(errorMsg) {
 }
 
 // ------------------------------------------------------
-// TEMPLATE HTML — DASHBOARD ADMIN
+// TEMPLATE HTML — DASHBOARD ADMIN (Dark Theme, mobile/WebView-first)
 // ------------------------------------------------------
 function renderDashboard() {
   return `<!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#0b0d12" />
+<meta name="color-scheme" content="dark" />
 <title>Key Server - Dashboard</title>
 <style>
-  * { box-sizing: border-box; }
+  :root {
+    --bg: #0b0d12;
+    --bg-elevated: #12151c;
+    --surface: #171b24;
+    --surface-2: #1e232e;
+    --border: #262c38;
+    --text: #e8eaee;
+    --text-muted: #8b93a3;
+    --text-faint: #565f70;
+    --accent: #5b8cff;
+    --accent-strong: #4674ee;
+    --green: #34d399;
+    --green-bg: rgba(52, 211, 153, 0.12);
+    --red: #ff6b6b;
+    --red-bg: rgba(255, 107, 107, 0.12);
+    --amber: #fbbf24;
+    --amber-bg: rgba(251, 191, 36, 0.12);
+    --radius: 14px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    background: var(--bg);
+    overscroll-behavior-y: contain;
+  }
   body {
-    margin: 0; font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    background: #f4f5f7; color: #222;
+    margin: 0;
+    font-family: Roboto, "Segoe UI", -apple-system, system-ui, Arial, sans-serif;
+    color: var(--text);
+    padding-bottom: calc(24px + var(--safe-bottom));
+    -webkit-font-smoothing: antialiased;
   }
   header {
-    background: #fff; padding: 16px 24px; display: flex; justify-content: space-between;
-    align-items: center; border-bottom: 1px solid #e5e7eb;
+    background: var(--bg-elevated);
+    padding: calc(14px + var(--safe-top)) calc(16px + var(--safe-right)) 14px calc(16px + var(--safe-left));
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 10;
   }
-  header h1 { font-size: 18px; margin: 0; }
+  header h1 { font-size: 16px; margin: 0; font-weight: 600; display: flex; align-items: center; gap: 8px; }
   header form { margin: 0; }
   header button {
-    background: #ef4444; color: #fff; border: none; padding: 8px 14px;
-    border-radius: 6px; cursor: pointer; font-size: 13px;
+    background: var(--surface-2); color: var(--red); border: 1px solid var(--border);
+    padding: 9px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500;
   }
-  .container { max-width: 1000px; margin: 24px auto; padding: 0 16px; }
+  header button:active { background: var(--red-bg); }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 16px calc(14px + var(--safe-right)) 8px calc(14px + var(--safe-left));
+  }
   .card {
-    background: #fff; border-radius: 10px; padding: 20px; margin-bottom: 20px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 16px;
+    margin-bottom: 16px;
   }
-  .card h2 { font-size: 15px; margin: 0 0 14px; color: #111; }
-  .row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
-  .row > div { flex: 1; min-width: 160px; }
-  label { font-size: 12px; color: #555; display: block; margin-bottom: 4px; }
+  .card h2 {
+    font-size: 14px; margin: 0 0 14px; color: var(--text);
+    font-weight: 600; display: flex; align-items: center; gap: 8px;
+  }
+  .row { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
+  label { font-size: 12.5px; color: var(--text-muted); display: block; margin-bottom: 6px; font-weight: 500; }
   input, select {
-    width: 100%; padding: 9px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px;
+    width: 100%;
+    padding: 12px 13px;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    color: var(--text);
+    border-radius: 9px;
+    font-size: 16px; /* mencegah auto-zoom di Android WebView saat fokus input */
   }
+  input::placeholder { color: var(--text-faint); }
+  input:focus, select:focus { outline: none; border-color: var(--accent); }
+
   .btn {
-    padding: 9px 16px; border: none; border-radius: 6px; font-size: 13px; cursor: pointer;
-    color: #fff;
+    padding: 12px 18px; border: none; border-radius: 9px; font-size: 14px; font-weight: 600;
+    cursor: pointer; color: #fff; -webkit-appearance: none; width: 100%;
   }
-  .btn-primary { background: #2563eb; }
-  .btn-primary:hover { background: #1d4ed8; }
+  .btn-primary { background: var(--accent); }
+  .btn-primary:active { background: var(--accent-strong); }
   .btn-green { background: #16a34a; }
-  .btn-green:hover { background: #15803d; }
-  .btn-gray { background: #6b7280; }
-  .btn-gray:hover { background: #4b5563; }
-  .btn-red { background: #dc2626; }
-  .btn-red:hover { background: #b91c1c; }
-  .btn-small { padding: 5px 10px; font-size: 12px; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #eee; }
-  th { color: #666; font-weight: 600; background: #fafafa; }
-  .badge {
-    padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  .btn-green:active { background: #15803d; }
+  .btn-gray { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
+  .btn-gray:active { background: #262c38; }
+  .btn-red { background: var(--red-bg); color: var(--red); border: 1px solid rgba(255,107,107,0.25); }
+  .btn-red:active { background: rgba(255,107,107,0.2); }
+  .btn-small { padding: 8px 12px; font-size: 12.5px; width: auto; }
+
+  /* Tabel: scroll horizontal di layar sempit, header sticky untuk kenyamanan mobile */
+  .table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); -webkit-overflow-scrolling: touch; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 640px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  th { color: var(--text-muted); font-weight: 600; background: var(--surface-2); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.03em; }
+  tr:last-child td { border-bottom: none; }
+  tr:active td { background: var(--surface-2); }
+
+  .badge { padding: 4px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .badge-active { background: var(--green-bg); color: var(--green); }
+  .badge-inactive { background: var(--red-bg); color: var(--red); }
+  .badge-expired { background: var(--amber-bg); color: var(--amber); }
+
+  .actions { display: flex; gap: 6px; }
+  .muted { color: var(--text-muted); font-size: 12.5px; line-height: 1.5; }
+  .key-mono { font-family: "SF Mono", "Roboto Mono", Consolas, monospace; font-weight: 600; letter-spacing: 0.02em; }
+
+  .empty-state {
+    text-align: center; padding: 28px 16px; color: var(--text-muted); font-size: 13px;
   }
-  .badge-active { background: #dcfce7; color: #166534; }
-  .badge-inactive { background: #fee2e2; color: #991b1b; }
-  .badge-expired { background: #fef3c7; color: #92400e; }
-  .actions button { margin-right: 4px; }
-  .muted { color: #888; font-size: 12px; }
+
   .toast {
-    position: fixed; bottom: 20px; right: 20px; background: #111; color: #fff;
-    padding: 12px 18px; border-radius: 8px; font-size: 13px; opacity: 0; transition: 0.3s;
-    pointer-events: none; max-width: 320px;
+    position: fixed;
+    left: 16px; right: 16px;
+    bottom: calc(20px + var(--safe-bottom));
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 13px 16px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    pointer-events: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    z-index: 50;
   }
-  .toast.show { opacity: 1; }
-  .key-mono { font-family: "SF Mono", Consolas, monospace; font-weight: 600; }
-  .import-box { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  .import-box { display: flex; flex-direction: column; gap: 10px; }
+  .import-row { display: flex; gap: 10px; }
+  .import-row select { flex: 1; }
+
+  input[type="file"] {
+    padding: 10px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
   .endpoint-box {
-    background: #0f172a; color: #e2e8f0; padding: 12px 14px; border-radius: 8px;
-    font-family: monospace; font-size: 12px; overflow-x: auto; margin-top: 8px;
+    background: #05070a;
+    color: #b7c4e0;
+    padding: 13px 14px;
+    border-radius: 9px;
+    font-family: "SF Mono", "Roboto Mono", Consolas, monospace;
+    font-size: 12px;
+    overflow-x: auto;
+    margin-top: 8px;
+    border: 1px solid var(--border);
+    white-space: pre;
+    -webkit-overflow-scrolling: touch;
+  }
+  .endpoint-box code { color: #7dd3fc; }
+
+  @media (min-width: 480px) {
+    .row { flex-direction: row; flex-wrap: wrap; }
+    .row > div { flex: 1; min-width: 150px; }
+    .btn { width: auto; }
+    .import-row { flex-wrap: nowrap; }
   }
 </style>
 </head>
@@ -472,7 +662,7 @@ function renderDashboard() {
     <div class="row">
       <div>
         <label>Custom Key (kosongkan untuk random)</label>
-        <input id="customKey" type="text" placeholder="Contoh: VIP-2026-XXXX" />
+        <input id="customKey" type="text" placeholder="Contoh: VIP-2026-XXXX" autocapitalize="characters" autocorrect="off" />
       </div>
       <div>
         <label>Tanggal Expired (kosongkan = tanpa batas)</label>
@@ -488,7 +678,7 @@ function renderDashboard() {
 
   <div class="card">
     <h2>📋 Daftar Key (<span id="totalCount">0</span>)</h2>
-    <div style="overflow-x:auto;">
+    <div class="table-wrap">
     <table>
       <thead>
         <tr>
@@ -504,22 +694,25 @@ function renderDashboard() {
       <tbody id="keyTableBody"></tbody>
     </table>
     </div>
+    <div id="emptyState" class="empty-state" style="display:none;">Belum ada key. Buat key baru di atas.</div>
   </div>
 
   <div class="card">
-    <h2>💾 Backup & Import</h2>
-    <p class="muted">
+    <h2>💾 Backup &amp; Import</h2>
+    <p class="muted" style="margin-top:0;">
       Data key disimpan di memori server. Setiap kali Railway redeploy, data akan reset.
       Download backup secara rutin, lalu import kembali setelah redeploy.
     </p>
     <div class="import-box">
-      <a href="/api/backup"><button class="btn btn-green">⬇️ Download Backup (backup.json)</button></a>
+      <a href="/api/backup" style="text-decoration:none;"><button class="btn btn-green" style="width:100%;">⬇️ Download Backup (backup.json)</button></a>
       <input type="file" id="importFile" accept="application/json" />
-      <select id="importMode">
-        <option value="merge">Gabung (merge)</option>
-        <option value="replace">Timpa semua (replace)</option>
-      </select>
-      <button class="btn btn-gray" onclick="importBackup()">⬆️ Import Backup</button>
+      <div class="import-row">
+        <select id="importMode">
+          <option value="merge">Gabung (merge)</option>
+          <option value="replace">Timpa semua (replace)</option>
+        </select>
+        <button class="btn btn-gray" style="flex:1;" onclick="importBackup()">⬆️ Import</button>
+      </div>
     </div>
   </div>
 
@@ -532,7 +725,7 @@ POST ${"${window.location.origin}"}/api/verify
 Body (JSON): { "key": "XXXX-XXXX-XXXX-XXXX" }</div>
     <p class="muted" style="margin-top:10px;">
       Response contoh saat valid:<br/>
-      <code>{"status":"valid","message":"OK","key":"...","expiresAt":"...","remainingDays":12}</code>
+      <code style="color:#7dd3fc;">{"status":"valid","message":"OK","key":"...","expiresAt":"...","remainingDays":12}</code>
     </p>
   </div>
 
@@ -545,15 +738,23 @@ function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
 }
 
 async function fetchKeys() {
   const res = await fetch('/api/keys');
   const data = await res.json();
   const tbody = document.getElementById('keyTableBody');
+  const emptyState = document.getElementById('emptyState');
   document.getElementById('totalCount').textContent = data.total;
   tbody.innerHTML = '';
+
+  if (data.total === 0) {
+    emptyState.style.display = 'block';
+  } else {
+    emptyState.style.display = 'none';
+  }
 
   data.keys.forEach(k => {
     const now = Date.now();
