@@ -538,7 +538,6 @@ async function generateKey() {
   // tambah try-catch agar error network terlihat
   let data;
   try { data = await res.json(); } catch(e) { showToast('❌ Gagal konek ke server'); return; }
-  const data = await res.json();
   if (data.status === 'ok') {
     showToast('✅ Key dibuat: ' + data.data.key);
     document.getElementById('customKey').value = '';
