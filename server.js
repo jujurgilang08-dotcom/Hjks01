@@ -455,8 +455,8 @@ let currentModalKey = null;
 
 // set endpoint box
 document.getElementById('endpointBox').textContent =
-  'GET  ' + window.location.origin + '/api/verify?key=XXXX&device_id=DEVICE\n' +
-  'POST ' + window.location.origin + '/api/verify\n' +
+  'GET  ' + window.location.origin + '/api/verify?key=XXXX&device_id=DEVICE\\n' +
+  'POST ' + window.location.origin + '/api/verify\\n' +
   'Body: { "key": "XXXX", "device_id": "DEVICE" }';
 
 function showToast(msg, dur=3000) {
@@ -589,7 +589,7 @@ async function importBackup() {
 function openDeviceModal(key, allowed, registered) {
   currentModalKey = key;
   document.getElementById('modalKey').textContent = key;
-  document.getElementById('modalDevices').value = allowed.join('\n');
+  document.getElementById('modalDevices').value = allowed.join('\\n');
   const regTitle = document.getElementById('registeredTitle');
   const regList  = document.getElementById('registeredList');
   if (registered.length) {
@@ -613,6 +613,8 @@ async function saveDevices() {
   const res  = await fetch('/api/keys/' + encodeURIComponent(currentModalKey) + '/devices', {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ allowedDevices })
+  });
+  const data = await res.json();
   if (data.status === 'ok') {
     showToast('✅ Device list disimpan.');
     document.getElementById('deviceOverlay').classList.remove('open');
