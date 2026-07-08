@@ -225,6 +225,38 @@ function handleVerify(req, res) {
 app.get("/api/verify",  handleVerify);
 app.post("/api/verify", handleVerify);
 
+// ── API PUBLIK: REVALIDATE (background check, tidak increment usedCount) ──────
+// Dipanggil oleh Java setiap 3 detik x3 setelah login sukses
+function handleRevalidate(req, res) {
+  const raw      = req.method === "GET" ? req.query : req.body;
+  const key      = ((raw.key       || "").toString().trim().toUpperCase());
+  const deviceId = ((raw.device_id || raw.deviceId || "").toString().trim());
+
+  if (!key) return res.status(400).json({ status: "invalid" });
+
+  const entry = KEYS[key];
+  if (!entry)        return res.status(404).json({ status: "invalid" });
+  if (!entry.active) return res.status(403).json({ status: "inactive" });
+  if (isExpired(entry)) return res.status(403).json({ status: "expired" });
+
+  if (entry.allowedDevices.length > 0) {
+    if (!deviceId || !entry.allowedDevices.includes(deviceId))
+      return res.status(403).json({ status: "device_blocked" });
+  }
+
+  // Update lastUsedAt tapi TIDAK increment usedCount
+  entry.lastUsedAt = new Date().toISOString();
+
+  const remainingDays = entry.expiresAt
+    ? Math.ceil((new Date(entry.expiresAt).getTime() - Date.now()) / 86400000)
+    : null;
+
+  return res.json({ status: "valid", remainingDays });
+}
+
+app.get("/api/revalidate",  handleRevalidate);
+app.post("/api/revalidate", handleRevalidate);
+
 // ── HEALTH ────────────────────────────────────────────────
 app.get("/health", (req, res) => res.json({ status: "ok" }));
 
